@@ -1,0 +1,33 @@
+# =============================================================
+#  Docker Compose — Infrastructure de test CESIZen
+#
+#  Usage :
+#    docker compose up -d          → démarre la DB en arrière-plan
+#    docker compose down           → arrête (conserve les données)
+#    docker compose down -v        → arrête ET supprime les données
+#    docker compose logs postgres  → affiche les logs
+#    docker compose ps             → vérifie l'état des services
+# =============================================================
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: cesizen_db_test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cesizen_test
+    ports:
+      - "5454:5432"
+    volumes:
+      - cesizen_test_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cesizen_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  cesizen_test_data:
+    name: cesizen_test_data
