@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { acceptNecessaryCookies } from './helpers/cookie-consent';
 
 const uniqueEmail = () => `e2e-${Date.now()}-${Math.floor(Math.random() * 1e6)}@test.com`;
 
 test.describe('Auth flow', () => {
   test('register → land on dashboard', async ({ page }) => {
     await page.goto('/register');
+    await acceptNecessaryCookies(page);
     await page.getByLabel(/email/i).first().fill(uniqueEmail());
     await page.getByLabel(/^mot de passe \*/i).fill('Password123');
     await page.getByLabel(/confirmer/i).fill('Password123');
@@ -14,6 +16,7 @@ test.describe('Auth flow', () => {
 
   test('login error shown for bad credentials', async ({ page }) => {
     await page.goto('/login');
+    await acceptNecessaryCookies(page);
     await page.getByLabel(/email/i).fill('nobody@test.com');
     await page.getByLabel(/mot de passe/i).fill('WrongPass1');
     await page.getByRole('button', { name: /se connecter/i }).click();
@@ -23,6 +26,7 @@ test.describe('Auth flow', () => {
   test('logout redirects to home', async ({ page }) => {
     const email = uniqueEmail();
     await page.goto('/register');
+    await acceptNecessaryCookies(page);
     await page.getByLabel(/email/i).first().fill(email);
     await page.getByLabel(/^mot de passe \*/i).fill('Password123');
     await page.getByLabel(/confirmer/i).fill('Password123');
