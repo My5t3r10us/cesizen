@@ -79,6 +79,15 @@ export function StatsView() {
     setDateRange(preset.getValue());
   };
 
+  const maxWeekdayCount = Math.max(
+    1,
+    ...(stats?.weekdayDistribution.map((day) => day.count) ?? [])
+  );
+  const maxHourCount = Math.max(
+    1,
+    ...(stats?.hourDistribution.map((hour) => hour.count) ?? [])
+  );
+
   return (
     <div className="space-y-6">
       {/* Sélecteur de dates */}
@@ -379,21 +388,29 @@ export function StatsView() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid h-40 grid-cols-7 items-end gap-2">
                   {stats.weekdayDistribution.map((day) => (
-                    <div key={day.label} className="text-center">
+                    <div
+                      key={day.label}
+                      className="flex h-full min-w-0 flex-col justify-end text-center"
+                    >
                       <div className="text-xs text-muted-foreground mb-1">
                         {day.label.slice(0, 3)}
                       </div>
-                      <div
-                        className="mx-auto rounded-lg transition-all"
-                        style={{
-                          width: '100%',
-                          height: `${Math.max(20, day.percentage * 2)}px`,
-                          backgroundColor: day.count > 0 ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
-                          opacity: day.count > 0 ? 0.3 + (day.percentage / 100) * 0.7 : 0.3,
-                        }}
-                      />
+                      <div className="flex h-24 items-end">
+                        <div
+                          className={cn(
+                            'w-full rounded-t-lg transition-all',
+                            day.count > 0 ? 'bg-primary' : 'bg-muted'
+                          )}
+                          style={{
+                            height: day.count > 0
+                              ? `${Math.max(12, (day.count / maxWeekdayCount) * 96)}px`
+                              : '4px',
+                          }}
+                          title={`${day.label} : ${day.count} entrée${day.count > 1 ? 's' : ''}`}
+                        />
+                      </div>
                       <div className="text-sm font-medium mt-1">{day.count}</div>
                     </div>
                   ))}
@@ -412,17 +429,22 @@ export function StatsView() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-end gap-1 h-24">
+                <div className="flex h-32 items-end gap-1">
                   {stats.hourDistribution.map((hour) => (
                     <div
                       key={hour.hour}
-                      className="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors rounded-t"
+                      className={cn(
+                        'flex-1 rounded-t transition-colors',
+                        hour.count > 0
+                          ? 'bg-primary hover:bg-primary/80'
+                          : 'bg-muted/60 hover:bg-muted'
+                      )}
                       style={{
-                        height: `${Math.max(4, hour.percentage * 4)}px`,
-                        backgroundColor: hour.count > 0 ? 'hsl(var(--primary))' : undefined,
-                        opacity: hour.count > 0 ? 0.3 + (hour.percentage / 100) * 0.7 : 0.2,
+                        height: hour.count > 0
+                          ? `${Math.max(12, (hour.count / maxHourCount) * 128)}px`
+                          : '4px',
                       }}
-                      title={`${hour.label}: ${hour.count} entrées`}
+                      title={`${hour.label} : ${hour.count} entrée${hour.count > 1 ? 's' : ''}`}
                     />
                   ))}
                 </div>
