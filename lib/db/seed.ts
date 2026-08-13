@@ -216,14 +216,16 @@ async function seed() {
 
   // Seed admin user
   console.log('👤 Creating admin user...');
-  const adminEmail = 'admin@cesizen.fr';
-  const adminPassword = hashPassword('Admin123!');
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@cesizen.fr';
+  const adminPassword = hashPassword(process.env.ADMIN_PASSWORD || 'Admin123!');
+  const adminNom = process.env.ADMIN_NOM || 'Admin';
+  const adminPrenom = process.env.ADMIN_PRENOM || 'CESIZen';
   
   await db.insert(users).values({
     email: adminEmail,
     passwordHash: adminPassword,
-    nom: 'Admin',
-    prenom: 'CESIZen',
+    nom: adminNom,
+    prenom: adminPrenom,
     role: 'admin',
   }).onConflictDoNothing();
   

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "deploy": {
+    "startCommand": "bun run start:railpack",
+    "variables": {
+      "RUN_DB_MIGRATIONS": "false"
+    }
+  }
+}

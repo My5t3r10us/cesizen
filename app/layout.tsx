@@ -1,9 +1,12 @@
+import 'dotenv/config';
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieConsent } from "@/components/cookies/cookie-consent";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
+import { InfoIcon } from "lucide-react";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -48,6 +51,12 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         <CookieConsent />
         <Toaster position="top-center" richColors />
+        {process.env.PRE_PROD === "true" && (
+          <Alert className="w-auto fixed bottom-3 right-3 z-50 border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-50">
+            <InfoIcon />
+            <AlertTitle>Pre-Prod environnement</AlertTitle>
+          </Alert>
+        )}
       </body>
     </html>
   );
