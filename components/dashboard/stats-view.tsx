@@ -135,7 +135,7 @@ export function StatsView() {
                       selected={dateRange.from}
                       onSelect={(date) => date && setDateRange((prev) => ({ ...prev, from: date }))}
                       disabled={(date) => date > dateRange.to || date > new Date()}
-                      initialFocus
+                      autoFocus
                     />
                   </PopoverContent>
                 </Popover>
@@ -165,7 +165,7 @@ export function StatsView() {
                       selected={dateRange.to}
                       onSelect={(date) => date && setDateRange((prev) => ({ ...prev, to: date }))}
                       disabled={(date) => date < dateRange.from || date > new Date()}
-                      initialFocus
+                      autoFocus
                     />
                   </PopoverContent>
                 </Popover>

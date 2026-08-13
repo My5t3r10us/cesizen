@@ -62,7 +62,7 @@
     thresholds: { lines: 60, functions: 60, branches: 60, statements: 60 },
   },
   pool: 'forks',
-  poolOptions: { forks: { singleFork: true } }, // évite les races sur la DB
+  fileParallelism: false, // évite les races sur la DB
 }
 
 ### 3.4 Lancer
