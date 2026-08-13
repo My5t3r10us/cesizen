@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Leaf, LogOut, User, Menu, X } from 'lucide-react';
+import { ExternalLink, Leaf, LogOut, MessageSquarePlus, User, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,6 +28,7 @@ export function Header({ user }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const fiderUrl = process.env.NEXT_PUBLIC_FIDER_URL?.trim();
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -62,6 +63,17 @@ export function Header({ user }: HeaderProps) {
           >
             Conseils
           </Link>
+          {fiderUrl && (
+            <a
+              href={fiderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Donner mon avis
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+          )}
           {user ? (
             <>
               <Link 
@@ -127,6 +139,22 @@ export function Header({ user }: HeaderProps) {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
+                {fiderUrl && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <a
+                        href={fiderUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cursor-pointer"
+                      >
+                        <MessageSquarePlus className="mr-2 h-4 w-4" />
+                        Donner mon avis
+                      </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/profil" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
@@ -166,6 +194,18 @@ export function Header({ user }: HeaderProps) {
             >
               Conseils
             </Link>
+            {fiderUrl && (
+              <a
+                href={fiderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Donner mon avis
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+            )}
             {user ? (
               <>
                 <Link 
