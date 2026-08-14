@@ -1,4 +1,4 @@
-const CACHE_NAME = "cesizen-v1";
+const CACHE_NAME = "cesizen-v2";
 const APP_SHELL = [
   "/offline.html",
   "/manifest.webmanifest",
@@ -7,7 +7,18 @@ const APP_SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  // `cache.addAll` rejette en bloc dès qu'une seule ressource échoue (401 derrière
+  // une basic auth, 404, réseau coupé), ce qui empêche le service worker de
+  // s'installer. On précache donc ressource par ressource, sans bloquer l'install.
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        APP_SHELL.map((url) =>
+          cache.add(new Request(url, { credentials: "same-origin" })).catch(() => undefined),
+        ),
+      ),
+    ),
+  );
   self.skipWaiting();
 });
 
