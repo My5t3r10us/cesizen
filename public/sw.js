@@ -1,4 +1,4 @@
-const CACHE_NAME = "cesizen-v2";
+const CACHE_NAME = "cesizen-v3";
 const APP_SHELL = [
   "/offline.html",
   "/manifest.webmanifest",
