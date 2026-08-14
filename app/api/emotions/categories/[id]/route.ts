@@ -5,6 +5,10 @@ import { getSession } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import {
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 const categorySchema = z.object({
   label: z.string().min(1, 'Le label est requis').max(100),
@@ -31,7 +35,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(category);
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Get category by id error:', error);
+    reportApiError(error, {
+      operation: 'emotion-categories.read',
+      route: '/api/emotions/categories/:id',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
@@ -66,10 +74,23 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     revalidatePath('/admin/emotions');
     revalidatePath('/dashboard');
+    recordBusinessOperation({
+      operation: 'emotion-categories.update',
+      route: '/api/emotions/categories/:id',
+      method: 'PUT',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Update category error:', error);
+    reportApiError(error, {
+      operation: 'emotion-categories.update',
+      route: '/api/emotions/categories/:id',
+      method: 'PUT',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
@@ -88,10 +109,23 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
     revalidatePath('/admin/emotions');
     revalidatePath('/dashboard');
+    recordBusinessOperation({
+      operation: 'emotion-categories.delete',
+      route: '/api/emotions/categories/:id',
+      method: 'DELETE',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Delete category error:', error);
+    reportApiError(error, {
+      operation: 'emotion-categories.delete',
+      route: '/api/emotions/categories/:id',
+      method: 'DELETE',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }

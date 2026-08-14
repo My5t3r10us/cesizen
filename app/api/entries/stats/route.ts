@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { entries } from '@/lib/db/schema';
 import { getSessionFromRequest } from '@/lib/auth/session';
 import { eq, and, gte } from 'drizzle-orm';
+import { reportApiError } from '@/lib/observability/api-telemetry';
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
@@ -44,7 +45,13 @@ export async function GET(request: NextRequest) {
     });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Get entries stats error:', error);
+    reportApiError(error, {
+      operation: 'entries.stats.read',
+      route: '/api/entries/stats',
+      method: 'GET',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }

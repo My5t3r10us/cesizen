@@ -5,13 +5,22 @@ import { hashPassword } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
 import { registerSchema } from '@/lib/validation/schemas';
+import {
+  recordApiLatency,
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 export async function POST(request: NextRequest) {
+  const context = { operation: 'auth.register', route: '/api/auth/register', method: 'POST' };
+  const startedAt = Date.now();
+
   try {
     const body = await request.json();
 
     const validationResult = registerSchema.safeParse(body);
     if (!validationResult.success) {
+      recordBusinessOperation(context, 'failure');
       return NextResponse.json(
         {
           error: 'Validation échouée',
@@ -28,6 +37,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
+      recordBusinessOperation(context, 'failure');
       return NextResponse.json(
         { error: 'Un compte avec cet email existe déjà' },
         { status: 409 }
@@ -42,14 +52,17 @@ export async function POST(request: NextRequest) {
       .returning();
 
     const token = await createSession(newUser);
+    recordBusinessOperation({ ...context, role: newUser.role, userId: newUser.id });
 
     return NextResponse.json({ success: true, token });
   /* v8 ignore next 7 */
   } catch (error) {
-    console.error('Registration error:', error);
+    reportApiError(error, context);
     return NextResponse.json(
       { error: "Une erreur est survenue lors de l'inscription" },
       { status: 500 }
     );
+  } finally {
+    recordApiLatency(context, startedAt);
   }
 }

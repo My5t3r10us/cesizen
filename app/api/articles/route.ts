@@ -5,6 +5,10 @@ import { getSession } from '@/lib/auth/session';
 import { articleSchema } from '@/lib/validation/schemas';
 import { eq, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import {
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +37,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Get articles error:', error);
+    reportApiError(error, {
+      operation: 'articles.list',
+      route: '/api/articles',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
@@ -90,10 +98,23 @@ export async function POST(request: NextRequest) {
 
     revalidatePath('/admin/articles');
     revalidatePath('/conseils');
+    recordBusinessOperation({
+      operation: 'articles.create',
+      route: '/api/articles',
+      method: 'POST',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Create article error:', error);
+    reportApiError(error, {
+      operation: 'articles.create',
+      route: '/api/articles',
+      method: 'POST',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }

@@ -13,6 +13,7 @@
 ## Qualité et validation
 
 - [Tests et CI/CD](testing/README.md)
+- [Observabilite Sentry](observability/sentry.md)
 - [Tests web](testing/web.md)
 - [Pipeline GitHub Actions](testing/ci.md)
 - [Cahier de tests](testing/test-plan.md)

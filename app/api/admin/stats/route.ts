@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth/session';
+import { reportApiError } from '@/lib/observability/api-telemetry';
 
 export async function GET() {
   const session = await getSession();
@@ -39,7 +40,13 @@ export async function GET() {
     });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Get admin stats error:', error);
+    reportApiError(error, {
+      operation: 'admin.stats.read',
+      route: '/api/admin/stats',
+      method: 'GET',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
