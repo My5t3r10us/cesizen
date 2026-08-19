@@ -16,7 +16,6 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "CESIZen - Votre compagnon de bien-être mental",
   description: "Application de suivi du bien-être mental pour les citoyens. Suivez vos émotions, accédez à des conseils et prenez soin de votre santé mentale.",
-  manifest: "/manifest.webmanifest",
   applicationName: "CESIZen",
   icons: {
     icon: [
@@ -46,6 +45,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
+      <head>
+        {/*
+          Le manifest doit être demandé avec les cookies/identifiants de la page.
+          Sans `use-credentials`, le navigateur le récupère en mode anonyme et
+          les environnements protégés par une basic auth (Traefik) renvoient 401.
+        */}
+        <link
+          rel="manifest"
+          href="/manifest.webmanifest"
+          crossOrigin="use-credentials"
+        />
+      </head>
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
         {children}
         <ServiceWorkerRegistration />

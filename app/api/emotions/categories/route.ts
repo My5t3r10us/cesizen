@@ -5,6 +5,10 @@ import { getSession } from '@/lib/auth/session';
 import { asc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import {
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 const categorySchema = z.object({
   label: z.string().min(1, 'Le label est requis').max(100),
@@ -21,7 +25,11 @@ export async function GET() {
     return NextResponse.json(categories);
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Get emotion categories error:', error);
+    reportApiError(error, {
+      operation: 'emotion-categories.list',
+      route: '/api/emotions/categories',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
@@ -51,10 +59,23 @@ export async function POST(request: NextRequest) {
 
     revalidatePath('/admin/emotions');
     revalidatePath('/dashboard');
+    recordBusinessOperation({
+      operation: 'emotion-categories.create',
+      route: '/api/emotions/categories',
+      method: 'POST',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Create category error:', error);
+    reportApiError(error, {
+      operation: 'emotion-categories.create',
+      route: '/api/emotions/categories',
+      method: 'POST',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }

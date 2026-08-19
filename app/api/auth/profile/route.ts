@@ -5,12 +5,26 @@ import { users } from '@/lib/db/schema';
 import { createSession, getSessionFromRequest } from '@/lib/auth/session';
 import { verifyPassword } from '@/lib/auth/password';
 import { profileUpdateSchema } from '@/lib/validation/schemas';
+import {
+  recordApiLatency,
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 export async function PATCH(request: NextRequest) {
   const session = await getSessionFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
   }
+
+  const context = {
+    operation: 'auth.profile.update',
+    route: '/api/auth/profile',
+    method: 'PATCH',
+    role: session.role,
+    userId: session.userId,
+  };
+  const startedAt = Date.now();
 
   try {
     const body = await request.json();
@@ -83,6 +97,7 @@ export async function PATCH(request: NextRequest) {
       .returning();
 
     const token = await createSession(updatedUser);
+    recordBusinessOperation(context);
 
     return NextResponse.json({
       success: true,
@@ -96,7 +111,9 @@ export async function PATCH(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Update profile error:', error);
+    reportApiError(error, context);
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
+  } finally {
+    recordApiLatency(context, startedAt);
   }
 }

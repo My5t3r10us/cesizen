@@ -6,6 +6,11 @@ import { encryptNote, decryptNote } from '@/lib/security/encryption';
 import { entrySchema } from '@/lib/validation/schemas';
 import { eq, desc, and, gte, lte } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import {
+  recordApiLatency,
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
@@ -13,6 +18,15 @@ export async function GET(request: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
   }
+
+  const context = {
+    operation: 'entries.list',
+    route: '/api/entries',
+    method: 'GET',
+    role: session.role,
+    userId: session.userId,
+  };
+  const startedAt = Date.now();
 
   try {
     const { searchParams } = new URL(request.url);
@@ -46,8 +60,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(decryptedEntries);
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Get user entries error:', error);
+    reportApiError(error, context);
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
+  } finally {
+    recordApiLatency(context, startedAt);
   }
 }
 
@@ -57,6 +73,15 @@ export async function POST(request: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
   }
+
+  const context = {
+    operation: 'entries.create',
+    route: '/api/entries',
+    method: 'POST',
+    role: session.role,
+    userId: session.userId,
+  };
+  const startedAt = Date.now();
 
   try {
     const body = await request.json();
@@ -92,10 +117,13 @@ export async function POST(request: NextRequest) {
     });
 
     revalidatePath('/dashboard');
+    recordBusinessOperation(context);
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Create entry error:', error);
+    reportApiError(error, context);
     return NextResponse.json({ error: "Une erreur est survenue lors de l'enregistrement" }, { status: 500 });
+  } finally {
+    recordApiLatency(context, startedAt);
   }
 }

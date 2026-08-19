@@ -5,6 +5,10 @@ import { getSession } from '@/lib/auth/session';
 import { articleSchema } from '@/lib/validation/schemas';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import {
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -27,7 +31,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(article);
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Get article by id error:', error);
+    reportApiError(error, {
+      operation: 'articles.read',
+      route: '/api/articles/:id',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
@@ -90,10 +98,23 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     revalidatePath('/admin/articles');
     revalidatePath('/conseils');
     revalidatePath(`/conseils/${rawData.slug}`);
+    recordBusinessOperation({
+      operation: 'articles.update',
+      route: '/api/articles/:id',
+      method: 'PUT',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Update article error:', error);
+    reportApiError(error, {
+      operation: 'articles.update',
+      route: '/api/articles/:id',
+      method: 'PUT',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
@@ -112,10 +133,23 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
     revalidatePath('/admin/articles');
     revalidatePath('/conseils');
+    recordBusinessOperation({
+      operation: 'articles.delete',
+      route: '/api/articles/:id',
+      method: 'DELETE',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Delete article error:', error);
+    reportApiError(error, {
+      operation: 'articles.delete',
+      route: '/api/articles/:id',
+      method: 'DELETE',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }

@@ -4,6 +4,10 @@ import { users } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import {
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -49,10 +53,23 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     revalidatePath('/admin/users');
+    recordBusinessOperation({
+      operation: 'admin.users.update',
+      route: '/api/admin/users/:id',
+      method: 'PATCH',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Patch user error:', error);
+    reportApiError(error, {
+      operation: 'admin.users.update',
+      route: '/api/admin/users/:id',
+      method: 'PATCH',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
@@ -89,10 +106,23 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     await db.delete(users).where(eq(users.id, userId));
 
     revalidatePath('/admin/users');
+    recordBusinessOperation({
+      operation: 'admin.users.delete',
+      route: '/api/admin/users/:id',
+      method: 'DELETE',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Delete user error:', error);
+    reportApiError(error, {
+      operation: 'admin.users.delete',
+      route: '/api/admin/users/:id',
+      method: 'DELETE',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }

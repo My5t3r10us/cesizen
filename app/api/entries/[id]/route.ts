@@ -6,6 +6,11 @@ import { encryptNote, decryptNote } from '@/lib/security/encryption';
 import { entrySchema } from '@/lib/validation/schemas';
 import { eq, and } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import {
+  recordApiLatency,
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -19,6 +24,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id: entryId } = await params;
+  const context = {
+    operation: 'entries.read',
+    route: '/api/entries/:id',
+    method: 'GET',
+    role: session.role,
+    userId: session.userId,
+  };
+  const startedAt = Date.now();
 
   try {
     const entry = await db.query.entries.findFirst({
@@ -37,8 +50,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Get entry by id error:', error);
+    reportApiError(error, context);
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
+  } finally {
+    recordApiLatency(context, startedAt);
   }
 }
 
@@ -50,6 +65,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id: entryId } = await params;
+  const context = {
+    operation: 'entries.update',
+    route: '/api/entries/:id',
+    method: 'PUT',
+    role: session.role,
+    userId: session.userId,
+  };
+  const startedAt = Date.now();
 
   try {
     const body = await request.json();
@@ -90,11 +113,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .where(eq(entries.id, entryId));
 
     revalidatePath('/dashboard');
+    recordBusinessOperation(context);
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Update entry error:', error);
+    reportApiError(error, context);
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
+  } finally {
+    recordApiLatency(context, startedAt);
   }
 }
 
@@ -106,6 +132,14 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id: entryId } = await params;
+  const context = {
+    operation: 'entries.delete',
+    route: '/api/entries/:id',
+    method: 'DELETE',
+    role: session.role,
+    userId: session.userId,
+  };
+  const startedAt = Date.now();
 
   try {
     await db.delete(entries).where(
@@ -113,10 +147,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     );
 
     revalidatePath('/dashboard');
+    recordBusinessOperation(context);
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Delete entry error:', error);
+    reportApiError(error, context);
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
+  } finally {
+    recordApiLatency(context, startedAt);
   }
 }

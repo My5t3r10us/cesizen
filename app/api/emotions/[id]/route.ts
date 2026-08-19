@@ -5,6 +5,10 @@ import { getSession } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import {
+  recordBusinessOperation,
+  reportApiError,
+} from '@/lib/observability/api-telemetry';
 
 const emotionSchema = z.object({
   label: z.string().min(1, "Le label est requis").max(100),
@@ -32,7 +36,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(emotion);
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Get emotion by id error:', error);
+    reportApiError(error, {
+      operation: 'emotions.read',
+      route: '/api/emotions/:id',
+      method: 'GET',
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
@@ -64,10 +72,23 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     revalidatePath('/admin/emotions');
     revalidatePath('/dashboard');
+    recordBusinessOperation({
+      operation: 'emotions.update',
+      route: '/api/emotions/:id',
+      method: 'PUT',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Update emotion error:', error);
+    reportApiError(error, {
+      operation: 'emotions.update',
+      route: '/api/emotions/:id',
+      method: 'PUT',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
@@ -86,10 +107,23 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
     revalidatePath('/admin/emotions');
     revalidatePath('/dashboard');
+    recordBusinessOperation({
+      operation: 'emotions.delete',
+      route: '/api/emotions/:id',
+      method: 'DELETE',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ success: true });
   /* v8 ignore next 4 */
   } catch (error) {
-    console.error('Delete emotion error:', error);
+    reportApiError(error, {
+      operation: 'emotions.delete',
+      route: '/api/emotions/:id',
+      method: 'DELETE',
+      role: session.role,
+      userId: session.userId,
+    });
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 });
   }
 }
